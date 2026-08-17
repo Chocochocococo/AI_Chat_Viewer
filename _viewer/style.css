@@ -1,0 +1,201 @@
+:root{
+  --bg:#ffffff; --bg2:#f7f7f8; --bg3:#ececf1; --fg:#1f2023; --fg2:#6b6c75;
+  --line:#e2e2e8; --acc:#10a37f; --acc2:#0d8a6c; --user:#eef3ff; --userline:#c9d8ff;
+  --warn:#b4690e; --code:#f4f4f6; --sel:#e6f5f0;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#1b1c1f; --bg2:#212328; --bg3:#2b2d33; --fg:#e9e9ec; --fg2:#a0a1ac;
+    --line:#34363d; --acc:#19c39a; --acc2:#14a583; --user:#232a38; --userline:#39476a;
+    --warn:#e0a960; --code:#26282d; --sel:#1d3b34;
+  }
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  font:16px/1.75 "Noto Sans TC","Microsoft JhengHei",-apple-system,"Segoe UI",sans-serif;
+  background:var(--bg);color:var(--fg);
+}
+#app{display:flex;height:100%}
+
+/* ---------- 側欄 ---------- */
+#sidebar{width:360px;min-width:360px;border-right:1px solid var(--line);display:flex;flex-direction:column;background:var(--bg2)}
+.side-head{padding:12px;border-bottom:1px solid var(--line)}
+.brand{font-weight:700;font-size:17px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.liblink{margin-left:auto;font-weight:400;font-size:13px;color:var(--acc);text-decoration:none}
+/* 側欄收合 */
+.sidebtn{border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg2);
+  cursor:pointer;font-size:15px;line-height:1;padding:3px 7px;flex:0 0 auto}
+.sidebtn:hover{background:var(--bg3);color:var(--fg)}
+.sidebtn.floating{position:fixed;left:8px;top:10px;z-index:30;opacity:.55;
+  background:var(--bg2);box-shadow:0 1px 4px #0003}
+.sidebtn.floating:hover{opacity:1}
+.sidebtn[hidden]{display:none !important}
+#app.side-off #sidebar{display:none}
+/* 收合時把標題往右挪，不要被浮動按鈕壓到 */
+#app.side-off #chead{padding-left:52px}
+.liblink:hover{text-decoration:underline}
+.searchrow{display:flex;gap:6px}
+#q{flex:1;min-width:0;padding:8px 11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font-size:14px}
+#q:focus{outline:2px solid var(--acc);outline-offset:-1px}
+.searchrow button,.chead-actions button,.tp-head button{
+  padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);
+  color:var(--fg);cursor:pointer;font-size:14px;white-space:nowrap
+}
+.searchrow button:hover,.chead-actions button:hover,.tp-head button:hover{background:var(--bg3)}
+.searchrow button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.projrow{display:flex;gap:6px;margin-top:8px}
+.projrow select{flex:1;min-width:0;background:var(--bg);color:var(--fg);border:1px solid var(--line);
+  border-radius:8px;padding:6px 8px;font-size:13px}
+.projrow button{border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);
+  cursor:pointer;padding:0 10px;font-size:13px}
+.projrow button:hover{background:var(--bg3)}
+.projrow button:disabled{opacity:.4;cursor:default}
+.projsave{display:block;margin-top:5px;font-size:12px;color:var(--acc);text-decoration:none}
+.projsave:hover{text-decoration:underline}
+.filters{display:flex;align-items:center;gap:10px;margin-top:8px;font-size:13px;color:var(--fg2);flex-wrap:wrap}
+.filters label{display:flex;align-items:center;gap:4px;cursor:pointer}
+#sort{margin-left:auto;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:4px 6px;font-size:13px}
+.counts{margin-top:8px;font-size:13px;color:var(--fg2)}
+.list{flex:1;overflow:auto}
+.item{padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer}
+.item:hover{background:var(--bg3)}
+.item.on{background:var(--sel);box-shadow:inset 3px 0 0 var(--acc)}
+.item .t{font-size:14.5px;font-weight:600;line-height:1.35;word-break:break-word}
+.item .s{margin-top:4px;font-size:12px;color:var(--fg2);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.item .snip{margin-top:5px;font-size:12.5px;color:var(--fg2);line-height:1.4;max-height:3.2em;overflow:hidden}
+.item .snip mark,mark{background:#ffe08a;color:#000;border-radius:2px;padding:0 1px}
+.badge{display:inline-block;padding:0 5px;border-radius:999px;background:var(--bg3);font-size:11px;line-height:18px}
+.badge.br{background:var(--acc);color:#fff}
+.badge.old{background:var(--warn);color:#fff}
+.badge.svc{background:transparent;border:1px solid var(--line);color:var(--fg2)}
+.badge.svc.claude{border-color:#a06bd8;color:#a06bd8}
+.badge.svc.chatgpt{border-color:var(--acc);color:var(--acc)}
+
+/* ---------- 主區 ---------- */
+#main{flex:1;min-width:0;overflow:auto;position:relative}
+.empty{max-width:620px;margin:16vh auto;padding:0 24px;color:var(--fg2)}
+.empty h1{color:var(--fg);font-size:22px}
+.pill{background:var(--bg3);border-radius:999px;padding:1px 8px;font-size:12px}
+#chead{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:14px 24px 10px}
+/* 標題跟訊息欄對齊，不然寬螢幕上標題會孤零零貼在最左邊 */
+#chead>*{max-width:852px;margin-left:auto;margin-right:auto}
+.ctitle-row{display:flex;align-items:flex-start;gap:12px}
+#ctitle{margin:0;font-size:21px;flex:1;word-break:break-word}
+.chead-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.chead-actions .embed{font-size:12.5px;color:var(--fg2);display:flex;align-items:center;gap:4px;cursor:pointer}
+.chead-actions button:disabled{opacity:.6;cursor:default}
+.cmeta{margin-top:6px;font-size:13px;color:var(--fg2);display:flex;gap:12px;flex-wrap:wrap}
+/* 名稱替換面板 */
+.namebox{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px;
+  padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg2);font-size:13px}
+.namebox[hidden]{display:none !important}
+.namebox label{display:flex;align-items:center;gap:6px;color:var(--fg2)}
+.namebox input[type=text]{width:130px;padding:5px 8px;border:1px solid var(--line);
+  border-radius:6px;background:var(--bg);color:var(--fg);font-size:13px}
+.namebox input[type=text]:focus{outline:2px solid var(--acc);outline-offset:-1px}
+.namebox .sw{cursor:pointer;color:var(--fg)}
+.namebox button{padding:5px 10px;border:1px solid var(--line);border-radius:6px;
+  background:var(--bg);color:var(--fg);cursor:pointer;font-size:13px}
+.namebox button:hover{background:var(--bg3)}
+.namebox .hint{color:var(--fg2);font-size:12px}
+.cmeta .in-group{color:var(--acc);cursor:pointer}
+.cmeta .in-group:hover{text-decoration:underline}
+.thread{max-width:900px;margin:0 auto;padding:18px 24px 120px}
+
+.msg{margin:0 0 18px;position:relative}
+.msg .who{font-size:12.5px;color:var(--fg2);margin-bottom:4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.msg .body{border:1px solid var(--line);border-radius:12px;padding:14px 18px;font-size:16px;background:var(--bg);overflow-wrap:anywhere}
+.msg.user .body{background:var(--user);border-color:var(--userline)}
+.msg .body>*:first-child{margin-top:0}
+.msg .body>*:last-child{margin-bottom:0}
+
+/* 分支切換器 */
+.brs{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--acc);border-radius:999px;padding:1px 4px;background:var(--bg)}
+.brs button{border:0;background:none;color:var(--acc);cursor:pointer;font-size:16px;padding:0 6px;line-height:1.4}
+.brs button:disabled{color:var(--fg2);cursor:default}
+.brs .n{font-size:12.5px;color:var(--acc);font-variant-numeric:tabular-nums}
+.brs.other{border-color:var(--warn)}
+.brs.other button,.brs.other .n{color:var(--warn)}
+
+details.think{margin:8px 0;border:1px dashed var(--line);border-radius:8px;background:var(--bg2)}
+details.think>summary{cursor:pointer;padding:8px 12px;font-size:13.5px;color:var(--fg2)}
+details.think .tb{padding:0 14px 12px;font-size:14.5px;color:var(--fg2)}
+.recap{font-size:13px;color:var(--fg2);font-style:italic;margin:-8px 0 12px}
+.recap-inline{font-size:13px;color:var(--fg2);font-style:italic}
+/* 整則只有圖片時，上面那條虛線分隔就多餘了 */
+.recap-inline + .out{border-top:0;padding-top:2px;margin-top:4px}
+
+.att{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.att a{font-size:13px;border:1px solid var(--line);border-radius:6px;padding:3px 8px;color:var(--fg);text-decoration:none;background:var(--bg2)}
+.att a:hover{border-color:var(--acc)}
+.att a.gone{opacity:.55;cursor:default;border-style:dashed}
+.att a.gone:hover{border-color:var(--line)}
+.msg img.asset{max-width:100%;border-radius:8px;margin-top:8px;display:block;border:1px solid var(--line)}
+/* ChatGPT 產生的圖片 / 檔案（來自 library_files.json，不在對話檔裡） */
+.out{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+.out .lbl{font-size:12.5px;color:var(--acc);margin-bottom:6px}
+.out .lbl .approx{color:var(--fg2);cursor:help}
+.out img.asset{margin-top:6px}
+
+/* markdown */
+.body pre{background:var(--code);padding:10px 12px;border-radius:8px;overflow-x:auto;font-size:14px;line-height:1.6}
+.body code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:14px;
+  font-family:ui-monospace,Consolas,"Cascadia Mono",monospace}
+.body pre code{background:none;padding:0}
+.body table{border-collapse:collapse;margin:10px 0;display:block;overflow-x:auto;max-width:100%}
+.body th,.body td{border:1px solid var(--line);padding:5px 9px;text-align:left}
+.body th{background:var(--bg2)}
+.body blockquote{border-left:3px solid var(--line);margin:8px 0;padding:2px 0 2px 12px;color:var(--fg2)}
+.body h1,.body h2,.body h3,.body h4{margin:14px 0 6px;line-height:1.3}
+.body h1{font-size:23px}.body h2{font-size:20px}.body h3{font-size:17.5px}.body h4{font-size:16px}
+.body ul,.body ol{padding-left:22px;margin:6px 0}
+.body hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+.body a{color:var(--acc)}
+
+/* ---------- 分支圖 ---------- */
+/* [hidden] 要放在前面且提高優先度，否則 #id 的 display:flex 會蓋掉它，
+   面板就變成關不掉、而且開啟時不會重新繪製（看起來是空的）*/
+#treepanel[hidden],#conv[hidden],#results[hidden],#empty[hidden]{display:none !important}
+/* 面板參與版面（flex 子元素），這樣打開時聊天內容會往左縮而不是被蓋住 */
+#treepanel{width:460px;min-width:340px;background:var(--bg2);
+  border-left:1px solid var(--line);display:flex;flex-direction:column;z-index:20}
+.tp-head{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.tp-info{font-size:13px;color:var(--fg2);flex:1}
+.tp-body{flex:1;overflow:auto;padding:10px 12px 40px;font-size:13.5px;line-height:1.6}
+.tnode{display:flex;align-items:flex-start;gap:6px;padding:2px 0;cursor:pointer;border-radius:6px}
+.tnode:hover{background:var(--bg3)}
+.tnode.active{background:var(--sel)}
+.tnode .dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:0 0 8px;background:var(--fg2)}
+.tnode.u .dot{background:#5b8def}
+.tnode.a .dot{background:var(--acc)}
+.tnode.active .dot{box-shadow:0 0 0 3px var(--sel)}
+/* 文字欄留最小寬度，縮排再深也不會被壓成只剩點點 */
+.tnode .tx{flex:1;min-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--fg2)}
+.tnode.active .tx{color:var(--fg);font-weight:600}
+.tnode .fk{font-size:11.5px;color:#fff;background:var(--warn);border-radius:999px;padding:0 5px;margin-top:2px;flex:0 0 auto}
+.tnode .dep{font-size:10.5px;color:var(--fg2);border:1px solid var(--line);border-radius:999px;
+  padding:0 5px;margin-top:2px;flex:0 0 auto}
+.tnode.alt{color:var(--acc)}
+.tnode.alt .tx{color:var(--acc)}
+.tnode.alt .dot{background:none;border:1px solid var(--acc)}
+.tnode.altitem{opacity:.9}
+.tnode.altitem .dot{opacity:.7}
+.tnode.skip{opacity:.75}
+.tnode.skip .dot{background:none;border:1px dashed var(--fg2);width:8px;height:8px}
+.tnode.skip .tx{font-style:italic}
+.tp-opts{display:flex;align-items:center;gap:4px;font-size:12.5px;color:var(--fg2);cursor:pointer;white-space:nowrap}
+
+/* ---------- 搜尋結果 ---------- */
+.results{max-width:900px;margin:0 auto;padding:18px 24px 80px}
+.results h2{font-size:18px;margin:0 0 12px}
+.rhit{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px;cursor:pointer;background:var(--bg2)}
+.rhit:hover{border-color:var(--acc)}
+.rhit .rt{font-weight:600;margin-bottom:4px}
+.rhit .rs{font-size:13.5px;color:var(--fg2);line-height:1.5}
+.progress{font-size:13px;color:var(--fg2)}
+
+@media (max-width:900px){
+  #sidebar{width:250px;min-width:250px}
+  #treepanel{width:min(100%,360px)}
+}

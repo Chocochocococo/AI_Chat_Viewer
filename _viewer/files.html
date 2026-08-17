@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GPT檔案庫</title>
+<link rel="stylesheet" href="style.css?v=20260817i">
+<style>
+  /* 共用樣式把 html,body 設成 height:100%，body 的 overflow 會傳遞到視窗，
+     sticky 的容器就只剩一個視窗高，頂端列會跟著捲走。這兩頁改回自然高度。*/
+  html,body{height:auto;overflow:visible}
+  /* 頂端列釘住，捲到哪都能用搜尋和篩選 */
+  .topbar{position:sticky;top:0;z-index:10;background:var(--bg);
+    border-bottom:1px solid var(--line);padding:12px 24px}
+  .fhead{max-width:1100px;margin:0 auto;display:flex;align-items:center;
+    gap:12px;flex-wrap:wrap}
+  .fhead h1{font-size:19px;margin:0;white-space:nowrap}
+  .fhead a{white-space:nowrap}
+  .fhead input,.fhead select{padding:6px 10px;border:1px solid var(--line);border-radius:8px;
+    background:var(--bg2);color:var(--fg);font-size:14px}
+  .wrap{max-width:1100px;margin:0 auto;padding:18px 24px 100px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+  .card{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--bg2);
+    display:flex;flex-direction:column}
+  .card .thumb{height:140px;display:flex;align-items:center;justify-content:center;
+    background:var(--bg3);overflow:hidden}
+  .card .thumb img{width:100%;height:100%;object-fit:cover}
+  .card .thumb .ph{font-size:30px;opacity:.5}
+  .card .info{padding:8px 10px;font-size:11px;color:var(--fg2);line-height:1.5}
+  .card .nm{font-size:12px;color:var(--fg);font-weight:600;word-break:break-all;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .card a{color:var(--acc);text-decoration:none}
+  .card .unused{color:var(--warn)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="fhead">
+    <h1>GPT檔案庫</h1>
+    <a href="index.html" style="color:var(--acc)">← 回對話</a>
+    <input id="fq" type="search" placeholder="搜尋檔名…">
+    <select id="ff">
+      <option value="">全部類型</option>
+      <option value="img">圖片</option>
+      <option value="other">非圖片</option>
+      <option value="unused">未出現在對話中</option>
+    </select>
+    <span id="fcount" style="font-size:13px;color:var(--fg2);margin-left:auto"></span>
+  </div>
+</div>
+<div class="wrap">
+  <div id="fgrid" class="grid"></div>
+</div>
+<script>
+'use strict';
+const IMG = /\.(png|jpe?g|gif|webp)$/i;
+let files = [];
+const isImg = f => (f.mt || '').startsWith('image/') || IMG.test(f.n || '');
+const kb = n => n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.round(n / 1024) + ' KB';
+
+function render() {
+  const q = document.querySelector('#fq').value.trim().toLowerCase();
+  const mode = document.querySelector('#ff').value;
+  let v = files.filter(f => !q || (f.n || '').toLowerCase().includes(q) || f.f.toLowerCase().includes(q));
+  if (mode === 'img') v = v.filter(isImg);
+  else if (mode === 'other') v = v.filter(f => !isImg(f));
+  else if (mode === 'unused') v = v.filter(f => !f.used);
+  document.querySelector('#fcount').textContent =
+    `顯示 ${v.length} / 共 ${files.length} 個檔案`;
+
+  const g = document.querySelector('#fgrid');
+  g.textContent = '';
+  const frag = document.createDocumentFragment();
+  for (const f of v.slice(0, 1500)) {
+    const c = document.createElement('div');
+    c.className = 'card';
+    const th = document.createElement('div');
+    th.className = 'thumb';
+    if (isImg(f)) {
+      const im = new Image();
+      im.loading = 'lazy';
+      im.src = '../' + f.f;
+      im.alt = f.n;
+      th.appendChild(im);
+    } else {
+      const s = document.createElement('span');
+      s.className = 'ph';
+      s.textContent = '📄';
+      th.appendChild(s);
+    }
+    const a0 = document.createElement('a');
+    a0.href = '../' + f.f; a0.target = '_blank'; a0.appendChild(th);
+    c.appendChild(a0);
+
+    const info = document.createElement('div');
+    info.className = 'info';
+    const nm = document.createElement('div');
+    nm.className = 'nm'; nm.textContent = f.n || f.f;
+    info.appendChild(nm);
+    const meta = document.createElement('div');
+    meta.textContent = kb(f.s) + (f.ct ? ' · ' + f.ct.slice(0, 10) : '');
+    info.appendChild(meta);
+    if (f.cid) {
+      const link = document.createElement('a');
+      link.href = 'index.html#conv=' + encodeURIComponent(f.cid);
+      link.textContent = '↗ ' + (f.cti || '來源對話');
+      link.title = f.cti;
+      link.style.display = 'block';
+      link.style.whiteSpace = 'nowrap';
+      link.style.overflow = 'hidden';
+      link.style.textOverflow = 'ellipsis';
+      info.appendChild(link);
+    } else if (!f.used) {
+      const u = document.createElement('div');
+      u.className = 'unused'; u.textContent = '未出現在對話中';
+      info.appendChild(u);
+    }
+    c.appendChild(info);
+    frag.appendChild(c);
+  }
+  g.appendChild(frag);
+}
+
+fetch('data/files.json').then(r => r.json()).then(d => {
+  files = d.sort((a, b) => (b.ct || '').localeCompare(a.ct || ''));
+  render();
+  document.querySelector('#fq').addEventListener('input', render);
+  document.querySelector('#ff').addEventListener('change', render);
+});
+</script>
+</body>
+</html>

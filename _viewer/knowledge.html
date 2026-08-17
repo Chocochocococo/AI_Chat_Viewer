@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude專案知識庫</title>
+<link rel="stylesheet" href="style.css?v=20260817i">
+<style>
+  /* 共用樣式把 html,body 設成 height:100%，body 的 overflow 會傳遞到視窗，
+     sticky 的容器就只剩一個視窗高，頂端列會跟著捲走。這兩頁改回自然高度。*/
+  html,body{height:auto;overflow:visible}
+  /* 頂端列釘住，捲到哪都能用搜尋和篩選 */
+  .topbar{position:sticky;top:0;z-index:10;background:var(--bg);
+    border-bottom:1px solid var(--line);padding:12px 24px}
+  .topbar-in{max-width:1000px;margin:0 auto;display:flex;align-items:center;
+    gap:12px;flex-wrap:wrap}
+  .topbar h1{font-size:19px;margin:0;white-space:nowrap}
+  .topbar input,.topbar select{padding:6px 10px;border:1px solid var(--line);
+    border-radius:8px;background:var(--bg2);color:var(--fg);font-size:14px}
+  .topbar input{min-width:200px}
+  .topbar a{color:var(--acc);text-decoration:none;white-space:nowrap}
+  .topbar a:hover{text-decoration:underline}
+  .cnt{font-size:13px;color:var(--fg2);margin-left:auto}
+  .wrap{max-width:1000px;margin:0 auto;padding:18px 24px 100px}
+
+  .proj{border:1px solid var(--line);border-radius:12px;margin-bottom:16px;
+    background:var(--bg2);overflow:hidden}
+  .proj > h2{margin:0;font-size:16px;padding:12px 16px;display:flex;
+    align-items:center;gap:10px;flex-wrap:wrap}
+  .proj .note{font-weight:400;font-size:13px;color:var(--fg2)}
+  .proj .cntb{font-weight:400;font-size:12.5px;color:var(--fg2);margin-left:auto}
+  .proj .empty-note{padding:0 16px 12px;font-size:13px;color:var(--fg2)}
+  .prompt{margin:0 16px 12px;border:1px dashed var(--line);border-radius:8px;background:var(--bg)}
+  .prompt > summary{cursor:pointer;padding:8px 12px;font-size:13px;color:var(--acc)}
+  .prompt .body{padding:0 14px 12px;font-size:15px}
+
+  .doc{border-top:1px solid var(--line)}
+  .doc > summary{cursor:pointer;padding:10px 16px;font-size:14px;
+    display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .doc > summary:hover{background:var(--bg3)}
+  .doc .fn{font-weight:600;word-break:break-all}
+  .doc .meta{font-size:12px;color:var(--fg2);margin-left:auto;white-space:nowrap}
+  .doc .body{padding:4px 18px 16px;font-size:15px;line-height:1.7}
+  .doc .body pre{max-height:70vh;overflow:auto}
+  .doc .loading{padding:10px 18px 16px;color:var(--fg2);font-size:13px}
+  .hit{font-size:12.5px;color:var(--fg2);padding:0 16px 10px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-in">
+    <h1>Claude專案知識庫</h1>
+    <a href="index.html">← 回對話</a>
+    <input id="q" type="search" placeholder="搜尋檔名或內容…" autocomplete="off">
+    <select id="pf"><option value="">全部專案</option></select>
+    <span id="cnt" class="cnt"></span>
+  </div>
+</div>
+<div class="wrap"><div id="list"></div></div>
+
+<script src="core.js?v=20260817i"></script>
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+let PROJECTS = [];
+const cache = new Map();      // doc id -> 全文（搜尋和顯示共用）
+
+const fmtN = n => n >= 10000 ? (n / 10000).toFixed(1) + ' 萬字' : n + ' 字';
+
+async function docText(id) {
+  if (cache.has(id)) return cache.get(id);
+  try {
+    const r = await fetch('data/kdoc/' + encodeURIComponent(id) + '.txt');
+    const t = r.ok ? await r.text() : '';
+    cache.set(id, t);
+    return t;
+  } catch (e) { return ''; }
+}
+
+/* 內容搜尋要先把全部文件抓下來，所以只在使用者真的搜尋時才做 */
+async function loadAll(onProgress) {
+  const all = PROJECTS.flatMap(p => p.docs);
+  for (let i = 0; i < all.length; i++) {
+    if (!cache.has(all[i].id)) await docText(all[i].id);
+    if (onProgress) onProgress(i + 1, all.length);
+  }
+}
+
+function snippet(text, q) {
+  const i = text.toLowerCase().indexOf(q);
+  if (i < 0) return '';
+  const a = Math.max(0, i - 40), b = Math.min(text.length, i + q.length + 80);
+  return (a > 0 ? '…' : '') + esc(text.slice(a, i)) + '<mark>'
+    + esc(text.slice(i, i + q.length)) + '</mark>'
+    + esc(text.slice(i + q.length, b)) + (b < text.length ? '…' : '');
+}
+
+function render() {
+  const q = $('#q').value.trim().toLowerCase();
+  const only = $('#pf').value;
+  const list = $('#list');
+  list.textContent = '';
+
+  let shownDocs = 0, totalDocs = 0;
+  for (const p of PROJECTS) {
+    totalDocs += p.docs.length;
+    if (only && p.id !== only) continue;
+
+    let docs = p.docs;
+    if (q) {
+      docs = docs.filter(d => (d.n || '').toLowerCase().includes(q)
+        || (cache.get(d.id) || '').toLowerCase().includes(q));
+      if (!docs.length) continue;
+    }
+    shownDocs += docs.length;
+
+    const box = el('div', 'proj');
+    const h = el('h2', null, p.name);
+    if (p.note) h.appendChild(el('span', 'note', p.note.slice(0, 60)));
+    h.appendChild(el('span', 'cntb', p.docs.length
+      ? `${p.docs.length} 個檔案 · ${fmtN(p.docs.reduce((a, d) => a + d.len, 0))}`
+      : '沒有知識庫檔案'));
+    box.appendChild(h);
+
+    if (p.prompt) {
+      const det = document.createElement('details');
+      det.className = 'prompt';
+      det.appendChild(el('summary', null, '📋 專案自訂指示'));
+      const b = el('div', 'body');
+      b.innerHTML = md(p.prompt);
+      det.appendChild(b);
+      box.appendChild(det);
+    }
+    if (!p.docs.length) {
+      box.appendChild(el('div', 'empty-note', '這個專案沒有上傳知識庫檔案。'));
+    }
+
+    for (const d of docs) {
+      const det = document.createElement('details');
+      det.className = 'doc';
+      const sm = el('summary');
+      sm.appendChild(el('span', 'fn', d.n));
+      sm.appendChild(el('span', 'meta',
+        fmtN(d.len) + (d.ct ? ' · ' + d.ct.slice(0, 10) : '')));
+      det.appendChild(sm);
+      const body = el('div', 'loading', '載入中…');
+      det.appendChild(body);
+      det.addEventListener('toggle', async () => {
+        if (!det.open || det.dataset.done) return;
+        det.dataset.done = '1';
+        const t = await docText(d.id);
+        body.className = 'body';
+        // 一律當成程式碼區塊呈現，保留原始排版；json/md 這種才不會被吃掉格式
+        body.innerHTML = md('```\n' + t + '\n```');
+        if (q) markIn(body, q);
+      });
+      box.appendChild(det);
+      if (q) {
+        const s = snippet(cache.get(d.id) || '', q);
+        if (s) {
+          const hit = el('div', 'hit');
+          hit.innerHTML = s;
+          box.appendChild(hit);
+        }
+      }
+    }
+    list.appendChild(box);
+  }
+
+  $('#cnt').textContent = q
+    ? `命中 ${shownDocs} 個檔案 / 共 ${totalDocs} 個`
+    : `${PROJECTS.length} 個專案 · ${totalDocs} 個檔案`;
+  if (!list.children.length) {
+    list.appendChild(el('div', 'empty-note', '沒有符合的檔案。'));
+  }
+}
+
+fetch('data/knowledge.json').then(r => r.ok ? r.json() : []).catch(() => []).then(d => {
+  PROJECTS = (d || []).sort((a, b) =>
+    b.docs.reduce((x, y) => x + y.len, 0) - a.docs.reduce((x, y) => x + y.len, 0));
+  const sel = $('#pf');
+  for (const p of PROJECTS) {
+    const o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = p.name + (p.docs.length ? `（${p.docs.length}）` : '');
+    sel.appendChild(o);
+  }
+  render();
+
+  let timer;
+  $('#q').addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      const q = $('#q').value.trim();
+      // 搜內容前先把檔案抓齊（只做一次）
+      if (q && cache.size < PROJECTS.reduce((a, p) => a + p.docs.length, 0)) {
+        $('#cnt').textContent = '載入檔案內容…';
+        await loadAll((i, n) => { $('#cnt').textContent = `載入檔案內容… ${i}/${n}`; });
+      }
+      render();
+    }, 200);
+  });
+  $('#pf').addEventListener('change', render);
+});
+</script>
+</body>
+</html>

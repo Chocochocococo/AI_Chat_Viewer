@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ChatGPT 備份檢視器</title>
+<link rel="stylesheet" href="style.css?v=20260817i">
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="side-head">
+      <div class="brand">
+        <button id="side-hide" class="sidebtn" title="收合側欄（Ctrl+B）">«</button>
+        <span id="brand-text">ChatGPT 備份</span>
+        <a href="files.html" id="link-files" class="liblink" title="ChatGPT 匯出的所有圖片與附件">📁 GPT檔案庫</a>
+        <a href="knowledge.html" id="link-know" class="liblink" title="Claude 專案裡上傳的知識庫檔案" hidden>📚 Claude專案知識庫</a>
+      </div>
+      <div class="searchrow">
+        <input id="q" type="search" placeholder="搜尋標題…" autocomplete="off">
+        <button id="btn-full" title="在所有訊息內容中搜尋">全文</button>
+      </div>
+      <div class="projrow">
+        <select id="proj" title="匯出檔只有專案 ID，名稱要自己命名"></select>
+        <button id="proj-name" title="幫這個專案取名字">✎</button>
+      </div>
+      <a id="proj-save" class="projsave" href="#" hidden
+         title="放進 _viewer/ 再跑一次 build.py，名稱就會固定下來">💾 存成 project-names.json</a>
+      <div class="filters">
+        <label><input type="checkbox" id="f-branch"> 只看有分支</label>
+        <label><input type="checkbox" id="f-star"> 已加星號</label>
+        <select id="sort">
+          <option value="ut">最近更新</option>
+          <option value="ct">建立時間</option>
+          <option value="n">訊息最多</option>
+          <option value="br">分支最多</option>
+          <option value="title">標題</option>
+        </select>
+      </div>
+      <div id="counts" class="counts"></div>
+    </div>
+    <div id="list" class="list"></div>
+  </aside>
+
+  <button id="side-show" class="sidebtn floating" title="展開側欄（Ctrl+B）" hidden>»</button>
+
+  <main id="main">
+    <div id="empty" class="empty">
+      <h1>ChatGPT 備份檢視器</h1>
+      <p>從左側選一個對話。有分支的對話會在訊息上方出現 <span class="pill">‹ 2/3 ›</span> 切換器，右上角的「分支圖」可以看到整棵樹。</p>
+    </div>
+
+    <div id="conv" hidden>
+      <header id="chead">
+        <div class="ctitle-row">
+          <h2 id="ctitle"></h2>
+          <div class="chead-actions">
+            <button id="btn-tree">分支圖</button>
+            <button id="btn-html" title="匯出成一個獨立 HTML，含所有分支">匯出 HTML</button>
+            <button id="btn-md" title="匯出目前這條路徑為 Markdown">匯出 MD</button>
+            <button id="btn-jsonl" title="匯出成 SillyTavern 的 .jsonl，分支會變成 swipes">匯出 JSONL</button>
+            <button id="btn-names" title="設定要替換的名字">✎ 名稱</button>
+            <label class="embed" title="把圖片內嵌進 HTML，檔案較大但可單獨帶到別台電腦看">
+              <input type="checkbox" id="embed-assets" checked> 內嵌圖片
+            </label>
+          </div>
+        </div>
+        <div id="cmeta" class="cmeta"></div>
+
+        <div id="namebox" class="namebox" hidden>
+          <label>使用者顯示為<input id="nm-user" type="text" placeholder="你" autocomplete="off"></label>
+          <label>ChatGPT 顯示為<input id="nm-asst" type="text" placeholder="ChatGPT" autocomplete="off"></label>
+          <label class="sw" title="只改畫面上的顯示，原始文本不會被修改">
+            <input type="checkbox" id="nm-apply"> 套用到畫面
+          </label>
+          <button id="nm-default" title="把目前這兩個名字設成所有對話的預設值">設為預設</button>
+          <span id="nm-hint" class="hint"></span>
+        </div>
+      </header>
+      <div id="thread" class="thread"></div>
+    </div>
+
+    <div id="results" hidden class="results"></div>
+  </main>
+
+  <div id="treepanel" hidden>
+    <div class="tp-head">
+      <strong>分支圖</strong>
+      <span id="tp-info" class="tp-info"></span>
+      <label class="tp-opts" title="只列出目前這條路徑，有多個版本的訊息可以點開">
+        <input type="checkbox" id="tp-forks"> 只看目前路徑
+      </label>
+      <button id="tp-close">關閉</button>
+    </div>
+    <div id="tp-body" class="tp-body"></div>
+  </div>
+</div>
+<script src="core.js?v=20260817i"></script>
+<script src="app.js?v=20260817i"></script>
+</body>
+</html>

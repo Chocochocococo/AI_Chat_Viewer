@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<style>
+/*__CSS__*/
+/* 單檔匯出版的版面調整 */
+html,body{height:auto}
+#app{display:flex;min-height:100vh;align-items:stretch}
+#main{flex:1;min-width:0}
+#treepanel{position:sticky;top:0;height:100vh;align-self:flex-start}
+.exp-note{max-width:852px;margin:0 auto 14px;font-size:13px;color:var(--fg2);
+  border:1px dashed var(--line);border-radius:8px;padding:8px 12px}
+</style>
+</head>
+<body>
+<div id="app">
+  <main id="main">
+    <header id="chead">
+      <div class="ctitle-row">
+        <h2 id="ctitle"></h2>
+        <div class="chead-actions"><button id="btn-tree">分支圖</button></div>
+      </div>
+      <div id="cmeta" class="cmeta"></div>
+    </header>
+    <div id="thread" class="thread"></div>
+  </main>
+  <div id="treepanel" hidden>
+    <div class="tp-head">
+      <strong>分支圖</strong>
+      <span id="tp-info" class="tp-info"></span>
+      <label class="tp-opts" title="只列出目前這條路徑，有多個版本的訊息可以點開">
+        <input type="checkbox" id="tp-forks"> 只看目前路徑
+      </label>
+      <button id="tp-close">關閉</button>
+    </div>
+    <div id="tp-body" class="tp-body"></div>
+  </div>
+</div>
+
+<script>
+/*__CORE__*/
+</script>
+<script>
+'use strict';
+const CONV = "__CONV__";
+const ASSETS = "__ASSETS__";
+const NAMES = "__NAMES__";
+const $ = s => document.querySelector(s);
+
+const S = {
+  path: pathToRoot(CONV, CONV.current_node || CONV.root),
+  expanded: new Set(),
+};
+S.defaultPath = S.path.slice();
+
+// 沒內嵌的檔案回傳空字串，core.js 會把它畫成灰色的「未內嵌」標籤
+const assetUrl = f => ASSETS[f] || '';
+
+function draw() {
+  $('#ctitle').textContent = CONV.title;
+  const meta = $('#cmeta');
+  meta.textContent = '';
+  const add = t => meta.appendChild(el('span', null, t));
+  add('建立 ' + fmtTime(CONV.create_time));
+  add('更新 ' + fmtTime(CONV.update_time));
+  add(Object.keys(CONV.nodes).length + ' 個節點');
+  add(leafCount(CONV) + ' 條分支');
+  if (CONV.model) add(CONV.model);
+
+  const thread = $('#thread');
+  thread.textContent = '';
+  const note = el('div', 'exp-note');
+  note.textContent = Object.keys(ASSETS).length
+    ? '這是離線單檔備份，包含全部分支，圖片與附件已內嵌。訊息上的 ‹ › 可切換版本，右上角「分支圖」看整棵樹。'
+    : '這是離線單檔備份，包含全部分支（未內嵌圖片，圖片連結無法開啟）。訊息上的 ‹ › 可切換版本。';
+  thread.appendChild(note);
+  thread.appendChild(renderThread(CONV, S.path, {
+    asset: assetUrl,
+    names: NAMES,
+    svc: CONV.service || '',
+    defaultPath: S.defaultPath,
+    onSwitch: (i, id) => {
+      // 切換後讓同一則訊息留在畫面上原本的位置，不要跳走
+      const oldEl = $(`#thread [data-node="${S.path[i]}"]`);
+      const keepY = oldEl ? oldEl.getBoundingClientRect().top : null;
+      S.path = S.path.slice(0, i).concat(descend(CONV, id));
+      draw();
+      if (!$('#treepanel').hidden) drawTree();
+      const newEl = $(`#thread [data-node="${id}"]`);
+      if (newEl && keepY !== null) scrollBy(0, newEl.getBoundingClientRect().top - keepY);
+      else if (newEl) newEl.scrollIntoView({ block: 'center' });
+    },
+  }));
+}
+
+function drawTree(recenter) {
+  $('#tp-info').textContent =
+    `${Object.keys(CONV.nodes).length} 節點 · ${leafCount(CONV)} 條分支`;
+  renderTreeInto($('#tp-body'), CONV, S.path, id => {
+    S.path = pathThrough(CONV, id);
+    draw();
+    drawTree();               // 不 recenter，維持樹的捲動位置
+  }, { pathOnly: $('#tp-forks').checked, expanded: S.expanded,
+       onToggle: id => { S.expanded.has(id) ? S.expanded.delete(id) : S.expanded.add(id); drawTree(); },
+       recenter: !!recenter });
+}
+
+$('#btn-tree').onclick = () => {
+  const p = $('#treepanel');
+  p.hidden = !p.hidden;
+  if (!p.hidden) {
+    // 樹很大時預設收起直線段
+    if (!S.treeTouched) $('#tp-forks').checked = Object.keys(CONV.nodes).length > 200;
+    drawTree(true);
+  }
+};
+$('#tp-forks').onchange = () => { S.treeTouched = true; drawTree(true); };
+$('#tp-close').onclick = () => { $('#treepanel').hidden = true; };
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') $('#treepanel').hidden = true;
+});
+draw();
+</script>
+</body>
+</html>
