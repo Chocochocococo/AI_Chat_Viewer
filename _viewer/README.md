@@ -17,6 +17,7 @@
 ```
 
 - 第一次會轉檔（約 1～3 分鐘），完成後自動開瀏覽器
+- 之後每次開啟直接進畫面，不會重新轉檔；只有放入新的備份 zip 時才會重轉
 - 整個資料夾可以直接壓縮帶走
 - 用 Python 跑：Windows 雙擊 `_viewer\啟動檢視器.cmd`，Mac / Linux 執行 `sh start.sh`，或 `python launch.py`
 - 已解壓好的匯出資料夾也支援：把 `_viewer` 放進去（和 `conversations*.json` 同一層）

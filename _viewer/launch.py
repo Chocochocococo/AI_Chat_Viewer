@@ -49,10 +49,8 @@ def main():
             idx = json.load(open(os.path.join(paths.data_dir(False), "index.json"),
                                  encoding="utf-8"))
             built_from = set(idx.get("imports") or [])
-            now = set([""]) if paths.is_legacy_layout() else set(
-                os.path.basename(d) for d in
-                __import__("glob").glob(os.path.join(paths.imports_dir(), "*")))
-            if now and built_from and not now <= built_from:
+            now = paths.current_imports()
+            if now != built_from:
                 print("偵測到新的備份，重新轉檔…")
                 print()
                 imported = True

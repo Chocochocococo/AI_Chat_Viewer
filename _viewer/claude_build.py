@@ -309,7 +309,8 @@ def main():
     with open(os.path.join(out, "index.json"), "w", encoding="utf-8") as fh:
         json.dump({"convs": index, "ft_shards": ft_n, "service": "claude",
                    "built": __import__("time").time(),
-                   "latest": "", "imports": [""]}, fh, ensure_ascii=False)
+                   "latest": "",
+                   "imports": sorted(paths.current_imports())}, fh, ensure_ascii=False)
 
     branched = sum(1 for c in index if c["br"] > 1)
     nd = sum(len(k["docs"]) for k in knowledge)

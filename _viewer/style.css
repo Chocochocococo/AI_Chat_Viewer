@@ -21,8 +21,14 @@ body{
 /* ---------- 側欄 ---------- */
 #sidebar{width:360px;min-width:360px;border-right:1px solid var(--line);display:flex;flex-direction:column;background:var(--bg2)}
 .side-head{padding:12px;border-bottom:1px solid var(--line)}
-.brand{font-weight:700;font-size:17px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
-.liblink{margin-left:auto;font-weight:400;font-size:13px;color:var(--acc);text-decoration:none}
+.brand{font-weight:700;font-size:17px;display:flex;align-items:center;gap:8px;
+  white-space:nowrap;overflow:hidden}
+#brand-text{overflow:hidden;text-overflow:ellipsis}
+/* 入口連結自成一列，標題和連結才不會擠在一起折行 */
+/* 窄側欄時整條連結換行，但標籤本身不會被拆開 */
+.entries{display:flex;gap:12px;margin:6px 0 8px;flex-wrap:wrap;row-gap:4px}
+.entries:not(:has(a:not([hidden]))){display:none}
+.liblink{font-weight:400;font-size:13px;color:var(--acc);text-decoration:none;white-space:nowrap}
 /* 側欄收合 */
 .sidebtn{border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg2);
   cursor:pointer;font-size:15px;line-height:1;padding:3px 7px;flex:0 0 auto}

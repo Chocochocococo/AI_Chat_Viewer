@@ -396,7 +396,7 @@ def main():
         json.dump({"convs": index, "ft_shards": ft_n,
                    "built": __import__("time").time(),
                    "latest": newest,
-                   "imports": sorted(set(c.get("src") or "" for c in index))},
+                   "imports": sorted(paths.current_imports())},
                   fh, ensure_ascii=False)
 
     if dup:

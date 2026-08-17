@@ -152,6 +152,18 @@ def latest_import():
     return os.path.basename(ds[-1]) if ds else ""
 
 
+def current_imports():
+    """目前實際存在的匯入批次名稱。
+
+    轉檔程式把這組寫進 index.json，啟動時再拿來比對：一樣就不用重轉。
+    三個轉檔程式都用同一個函式，避免各寫各的而對不上、每次都重轉。
+    """
+    if is_legacy_layout():
+        return {""}
+    return {os.path.basename(d)
+            for d in glob.glob(os.path.join(imports_dir(), "*")) if os.path.isdir(d)}
+
+
 def meta_file(name):
     """library_files.json 之類的：優先用最新一次匯入的，再退回 export/ 根目錄。"""
     exp = export_dir()

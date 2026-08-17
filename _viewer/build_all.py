@@ -73,7 +73,8 @@ def merge(stages, out):
     with open(os.path.join(out, "index.json"), "w", encoding="utf-8") as fh:
         json.dump({"convs": convs, "ft_shards": ft_n, "service": "both",
                    "built": __import__("time").time(),
-                   "latest": "", "imports": [""]}, fh, ensure_ascii=False)
+                   "latest": "",
+                   "imports": sorted(paths.current_imports())}, fh, ensure_ascii=False)
     with open(os.path.join(out, "groups.json"), "w", encoding="utf-8") as fh:
         json.dump(groups, fh, ensure_ascii=False)
     with open(os.path.join(out, "files.json"), "w", encoding="utf-8") as fh:

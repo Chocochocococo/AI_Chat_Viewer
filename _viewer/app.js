@@ -627,9 +627,9 @@ async function exportHtml(withAssets) {
 
     btn.textContent = '產生 HTML…';
     const [css, core, tpl] = await Promise.all([
-      fetch('style.css?v=20260817i').then(r => r.text()),
-      fetch('core.js?v=20260817i').then(r => r.text()),
-      fetch('export-template.html?v=20260817i').then(r => r.text()),
+      fetch('style.css?v=20260817k').then(r => r.text()),
+      fetch('core.js?v=20260817k').then(r => r.text()),
+      fetch('export-template.html?v=20260817k').then(r => r.text()),
     ]);
 
     // 對話內容裡可能有 "</script>"，直接塞進 <script> 會把標籤提早關掉，
